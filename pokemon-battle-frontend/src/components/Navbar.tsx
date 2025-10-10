@@ -5,18 +5,20 @@ const Navbar = () => {
     <div className="navbar bg-white">
       <div className="navbar-start">
         <Link
-          className="text-red-500
+          className="
+    text-red-500
+    text-3xl
+    uppercase
     font-bold
-    text-2xl
     tracking-wider
     drop-shadow-2xl
-    uppercase
-    hover:scale-110
     transition-transform duration-300
     text-center
-    ml-[1rem]
-        "
-          style={{ fontFamily: "'Fredoka One', sans-serif" }}
+  "
+          style={{
+            fontFamily: "'Luckiest Guy', cursive",
+            WebkitTextStroke: "1px #000080",
+          }}
           to="/"
         >
           Pokemon Battle
