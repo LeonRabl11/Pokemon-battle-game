@@ -2,16 +2,19 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom"; // react-router-dom statt react-router
 import { useAuth } from "../context/AuthContext";
 
+// Validierungsschema
 const schema = z.object({
   email: z.string().email("Invalid email"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   remember: z.boolean().optional(),
 });
+
 type FormValues = z.infer<typeof schema>;
 
+// Hilfsfunktion für Fehlermeldungen
 function getErrorMessage(err: unknown): string {
   if (err instanceof Error) return err.message;
   if (typeof err === "string") return err;
@@ -24,24 +27,23 @@ export default function Login() {
   const location = useLocation() as { state?: { from?: string } };
   const [serverError, setServerError] = useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { remember: true },
   });
 
-  const onSubmit = async (values: FormValues): Promise<void> => {
+  const onSubmit = async (values: FormValues) => {
     setServerError(null);
     try {
+      // Login über AuthContext
       await login({
         email: values.email,
         password: values.password,
         remember: values.remember,
       });
-      const to = location.state?.from ?? "/home";
+
+      // Weiterleiten nach Login: vorherige Seite oder Battle
+      const to = location.state?.from ?? "/battle";
       navigate(to, { replace: true });
     } catch (err: unknown) {
       setServerError(getErrorMessage(err));
@@ -53,11 +55,7 @@ export default function Login() {
       <div className="w-full max-w-md rounded-2xl shadow bg-white p-6 space-y-4">
         <h1 className="text-2xl font-semibold text-center">Sign In</h1>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="space-y-4"
-          noValidate
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <div>
             <label className="block text-sm font-medium">Email</label>
             <input
@@ -66,9 +64,7 @@ export default function Login() {
               {...register("email")}
             />
             {errors.email && (
-              <p className="text-xs text-red-600 mt-1">
-                {errors.email.message}
-              </p>
+              <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>
             )}
           </div>
 
@@ -80,9 +76,7 @@ export default function Login() {
               {...register("password")}
             />
             {errors.password && (
-              <p className="text-xs text-red-600 mt-1">
-                {errors.password.message}
-              </p>
+              <p className="text-xs text-red-600 mt-1">{errors.password.message}</p>
             )}
           </div>
 
