@@ -1,7 +1,11 @@
-const API_URL = "https://pokeapi.co/api/v2/pokemon?limit=15";
+const API_URL = "https://pokeapi.co/api/v2/pokemon";
 
-const getAllPokemons = async (abortCont: AbortController) => {
-  const res = await fetch(API_URL, {
+const getAllPokemons = async (
+  abortCont: AbortController,
+  offset: number,
+  limit: number
+) => {
+  const res = await fetch(`${API_URL}?offset=${offset}&limit=${limit}`, {
     signal: abortCont.signal,
   });
 

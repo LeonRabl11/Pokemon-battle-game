@@ -11,15 +11,19 @@ const PokemonProvider = ({ children }: PokemonProvicerProps) => {
   const [pokemons, setPokemons] = useState<Pokemon[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [offset, setOffset] = useState(0);
+  const limit = 16;
+  const [total, setTotal] = useState(0);
+
   useEffect(() => {
     const abortController = new AbortController();
     (async () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await getAllPokemons(abortController);
+        const data = await getAllPokemons(abortController, offset, limit);
+        setTotal(data.count);
 
-        // const data = await pokemonData;
         console.log("data from getAllPokemons:", data);
         if (!data || !data.results) {
           throw new Error("Pokémon data is missing 'results' field");
@@ -52,9 +56,29 @@ const PokemonProvider = ({ children }: PokemonProvicerProps) => {
     return () => {
       abortController.abort();
     };
-  }, []);
+  }, [offset]);
+
+  const nextPage: () => void = () => {
+    console.log("clicked");
+    if (offset + limit < total) setOffset((prev) => prev + limit);
+  };
+
+  const prevPage: () => void = () => {
+    if (offset - limit >= 0) setOffset((prev) => prev - limit);
+  };
   return (
-    <PokemonContext.Provider value={{ pokemons, setPokemons, loading, error }}>
+    <PokemonContext.Provider
+      value={{
+        pokemons,
+        setPokemons,
+        loading,
+        error,
+        nextPage,
+        prevPage,
+        offset,
+        total,
+      }}
+    >
       {children}
     </PokemonContext.Provider>
   );

@@ -23,4 +23,8 @@ export type PokemonContextType = {
   setPokemons: Dispatch<SetStateAction<Pokemon[]>>;
   loading: boolean;
   error: string | null;
+  nextPage: () => void;
+  prevPage: () => void;
+  offset: number;
+  total: number;
 };

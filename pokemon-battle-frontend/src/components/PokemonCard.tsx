@@ -5,13 +5,11 @@ type PokemonCardProps = {
 
 const PokemonCard = ({ name, image }: PokemonCardProps) => {
   return (
-    <div className="card bg-base-100 w-50 h-40 shadow-sm">
-      <figure className="px-3 pt-10">
-        <img src={image} alt="Shoes" className="rounded-xl" />
-      </figure>
-      <div className="card-body items-center text-center text-black">
-        <h2 className="card-title">{name}</h2>
-      </div>
+    <div className="card w-40 bg-base-100 shadow-md items-center hover:scale-105 transition-transform duration-300 cursor-pointer">
+      <img src={image} alt={name} className="w-24 h-24 object-contain" />
+      <h2 className="card-title text-sm p-2 items-center text-center font-bold capitalize text-black">
+        {name}
+      </h2>
     </div>
   );
 };
