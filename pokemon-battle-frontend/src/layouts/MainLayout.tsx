@@ -4,7 +4,7 @@ import { Navbar } from "../components";
 
 const MainLayout = () => {
   return (
-    <div className="text-gray-300 flex bg-[#8ED0F1] flex-col min-h-screen">
+    <div className="text-gray-300 bg-gradient-to-b from-purple-900 via-blue-800 to-blue-600 flex-col min-h-screen">
       <Navbar />
       <PokemonProvider>
         <main className="flex-grow flex flex-col">

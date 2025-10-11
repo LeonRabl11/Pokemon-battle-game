@@ -28,3 +28,21 @@ export type PokemonContextType = {
   offset: number;
   total: number;
 };
+
+export type ApiStat = {
+  base_stat: number;
+  stat: {
+    name: string;
+  };
+};
+
+export type BattlePokemon = {
+  name: string;
+  image: string;
+  stats: {
+    base_stat: number;
+    stat: { name: string };
+  }[];
+};
+
+

@@ -1,12 +1,18 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { usePokemons } from "../context";
 import PokemonCard from "./PokemonCard";
 import PokemonDetails from "./PokemonDetails";
+import type { Pokemon } from "../types";
+import { useBattle } from "../context/BattleContext";
 
 const PokemonList = () => {
   const { loading, error, pokemons, nextPage, prevPage, offset, total } =
     usePokemons();
-  const [selectedPokemon, setSelectedPokemon] = useState<any | null>(null);
+  const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null);
+
+  const { setPlayerPokemon } = useBattle();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -116,9 +122,10 @@ const PokemonList = () => {
             <hr className="border-t border-gray-300 w-full my-2" />
             <button
               className="mt-4 bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-[1rem] font-semibold transition"
-              onClick={() => {
-                console.log(`${selectedPokemon.name} is ready to battle!`);
-              }}
+            onClick={() => {
+              setPlayerPokemon(selectedPokemon); 
+              navigate("/battle");               
+            }}
             >
               Battle
             </button>
