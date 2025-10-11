@@ -1,33 +1,40 @@
-import { z } from 'zod/v4';
+import { z } from 'zod';
 
-const envSchema = z.object({
-  MONGO_URI: z.url({ protocol: /mongodb/ }),
-  DB_NAME: z.string(),
-  REFRESH_TOKEN_TTL: z.coerce.number().default(30 * 24 * 60 * 60), 
-  ACCESS_TOKEN_TTL: z.coerce.number().default(15 * 60),
-  SALT_ROUNDS: z.coerce.number().default(13),
+const EnvSchema = z.object({
+  PORT: z.coerce.number().default(4001),
 
-  ACCESS_JWT_SECRET: z
-    .string({
-      error: 'ACCESS_JWT_SECRET is required and must be at least 64 characters long'
-    })
-    .min(64),
-  CLIENT_BASE_URL: z.url().default('http://localhost:5173')
+  // DB
+  MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
+  DB_NAME: z.string().default('pokemon-auth'),
+
+  // Auth
+  JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 chars'),
+  // jsonwebtoken accepts string like "1h" or a numeric seconds value
+  JWT_EXPIRES_IN: z.union([z.string().min(1), z.coerce.number().positive()]).default('1h'),
+  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().default(30),
+
+  // CORS
+  CORS_ORIGIN: z.string().default('http://localhost:5173') // can be comma-separated list
 });
 
-const parsedEnv = envSchema.safeParse(process.env);
+const parsed = EnvSchema.safeParse(process.env);
 
-if (!parsedEnv.success) {
-  console.error('❌ Invalid environment variables:\n', z.prettifyError(parsedEnv.error));
+if (!parsed.success) {
+  console.error('❌ Invalid environment variables:', parsed.error.format());
   process.exit(1);
 }
 
 export const {
-  ACCESS_JWT_SECRET,
-  ACCESS_TOKEN_TTL,
+  PORT,
+  MONGODB_URI,
   DB_NAME,
-  CLIENT_BASE_URL,
-  MONGO_URI,
-  REFRESH_TOKEN_TTL,
-  SALT_ROUNDS
-} = parsedEnv.data;
+  JWT_SECRET,
+  JWT_EXPIRES_IN,
+  REFRESH_TOKEN_TTL_DAYS,
+  CORS_ORIGIN
+} = parsed.data;
+
+// Support multiple origins separated by commas
+export const CLIENT_ORIGINS = CORS_ORIGIN.split(',').map(s => s.trim());
+// For simple cases where you just need one string:
+export const CLIENT_BASE_URL = CLIENT_ORIGINS[0] ?? 'http://localhost:5173';
