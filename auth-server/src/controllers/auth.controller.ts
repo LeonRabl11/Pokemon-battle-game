@@ -25,10 +25,23 @@ export async function register(req: Request, res: Response) {
   const existing = await User.findOne({ email });
   if (existing) return badRequest(res, 'Email already registered');
 
+  
   const passwordHash = await bcrypt.hash(password, 12);
-  await User.create({ email, passwordHash });
+  const newUser = await User.create({
+    email,
+    passwordHash,
+    xp: 0,
+  });
+  console.log('New user created:', newUser);
 
-  return res.status(201).json({ message: 'Registered' });
+  return res.status(201).json({
+    message: 'Registered',
+    user: {
+      _id: newUser._id,
+      email: newUser.email,
+      xp: newUser.xp,
+    },
+  });
 }
 
 /**
@@ -48,6 +61,9 @@ export async function login(req: Request, res: Response) {
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) return res.status(401).json({ message: 'Invalid email or password' });
 
+  user.xp = (user.xp || 0)
+  await user.save();
+
   const accessToken = signAccessToken(String(user._id), user.email);
 
   // issue refresh token (store hash in DB, return raw to client)
@@ -65,7 +81,7 @@ export async function login(req: Request, res: Response) {
 
   return res.json({
     token: accessToken,
-    user: { _id: user._id, email: user.email },
+    user: { _id: user._id, email: user.email, xp: user.xp },
     refreshToken: rawRefresh
   });
 }

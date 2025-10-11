@@ -45,4 +45,10 @@ export type BattlePokemon = {
   }[];
 };
 
+export type User = {
+  email: string;
+  xp: number;
+  token: string; 
+};
+
 

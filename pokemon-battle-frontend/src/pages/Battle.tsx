@@ -3,14 +3,16 @@ import { useBattle } from "../context/BattleContext";
 import type { BattlePokemon } from "../types";
 import { getAllPokemons } from "../data";
 import type { ApiStat } from "../types";
+import { useAuth } from "../context/AuthContext"; 
 
 const Battle = () => {
   const { playerPokemon } = useBattle();
   const [computerPokemon, setComputerPokemon] = useState<BattlePokemon | null>(null);
-
   const [result, setResult] = useState<null | "win" | "lose">(null);
   const [xp, setXp] = useState(0);
+  const { user } = useAuth(); // current used token
 
+  // load random enemy 
   const fetchRandomPokemon = async () => {
     const data = await getAllPokemons(new AbortController(), 0, 100);
     const randomIndex = Math.floor(Math.random() * data.results.length);
@@ -63,23 +65,41 @@ const Battle = () => {
 
   const getTotalStats = (pokemon: BattlePokemon) =>
     pokemon.stats.reduce((sum, s) => sum + s.base_stat, 0);
-  
+
   const handleBattle = async () => {
     const playerTotal = getTotalStats(playerPokemon);
     const computerTotal = getTotalStats(computerPokemon);
 
-    if (playerTotal > computerTotal) {
-      setResult("win");
-      setXp((prev) => prev + 100);
+    const amount = playerTotal > computerTotal ? 100 : -50;
+    const newResult = playerTotal > computerTotal ? "win" : "lose";
+
+    setResult(newResult);
+
+    // send xp to backend 
+    if (user?.token) {
+      try {
+        const res = await fetch("http://localhost:5000/api/users/xp", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${user.token}`,
+          },
+          body: JSON.stringify({ amount }),
+        });
+
+        if (!res.ok) throw new Error("Failed to update XP");
+
+        const data = await res.json();
+        setXp(data.xp); // curren xp from backend 
+      } catch (err) {
+        console.error("Fehler beim Aktualisieren der XP:", err);
+      }
     } else {
-      setResult("lose");
-      setXp((prev) => Math.max(prev - 50, 0));
+      // fallback: lokal actualisation
+      setXp((prev) => Math.max(prev + amount, 0));
     }
 
-    setTimeout(() => {
-      fetchRandomPokemon();
-      setResult(null); 
-    }, 1500);
+    fetchRandomPokemon();
   };
 
   return (
@@ -87,7 +107,7 @@ const Battle = () => {
       <h1
         className="
           text-yellow-400 text-3xl uppercase font-bold tracking-wider
-          drop-shadow-2xl mt-6 mb-10 transition-transform duration-300 text-center
+          drop-shadow-2xl mt-6 mb-6 text-center
         "
         style={{
           fontFamily: "'Luckiest Guy', cursive",
@@ -97,41 +117,34 @@ const Battle = () => {
         Pokemon Battle
       </h1>
 
+      <div className="mb-4 text-xl font-semibold">
+        Your XP: <span className="text-yellow-400">{xp}</span>
+      </div>
+
       <div className="flex justify-center gap-32 mb-8">
-      
+        {/* Player */}
         <div className="flex flex-col items-center">
           <h2 className="text-xl font-bold mb-2">Your Pokemon</h2>
           <div className="card bg-base-100 w-80 shadow-md text-white">
             <figure className="bg-gray-100 p-4">
-              <img
-                src={playerPokemon.image}
-                alt={playerPokemon.name}
-                className="w-48 h-48 object-contain"
-              />
+              <img src={playerPokemon.image} alt={playerPokemon.name} className="w-48 h-48 object-contain" />
             </figure>
             <div className="card-body">
-              <h2 className="card-title capitalize justify-center">
-                {playerPokemon.name}
-              </h2>
+              <h2 className="card-title capitalize justify-center">{playerPokemon.name}</h2>
               <div className="space-y-1">{renderStats(playerPokemon.stats)}</div>
             </div>
           </div>
         </div>
 
+        {/* Computer */}
         <div className="flex flex-col items-center">
           <h2 className="text-xl font-bold mb-2">Enemy</h2>
           <div className="card bg-base-100 w-80 shadow-md text-white">
             <figure className="bg-gray-100 p-4">
-              <img
-                src={computerPokemon.image}
-                alt={computerPokemon.name}
-                className="w-48 h-48 object-contain"
-              />
+              <img src={computerPokemon.image} alt={computerPokemon.name} className="w-48 h-48 object-contain" />
             </figure>
             <div className="card-body">
-              <h2 className="card-title capitalize justify-center">
-                {computerPokemon.name}
-              </h2>
+              <h2 className="card-title capitalize justify-center">{computerPokemon.name}</h2>
               <div className="space-y-1">{renderStats(computerPokemon.stats)}</div>
             </div>
           </div>
@@ -158,10 +171,6 @@ const Battle = () => {
           )}
         </div>
       )}
-
-      <p className="mt-4 text-xl font-semibold text-yellow-300">
-        Total XP: {xp}
-      </p>
     </div>
   );
 };
