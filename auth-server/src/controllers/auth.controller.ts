@@ -143,3 +143,7 @@ export async function logout(req: Request, res: Response) {
   }
   return res.json({ message: 'Logged out' });
 }
+
+
+
+

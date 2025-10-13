@@ -1,36 +1,48 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useBattle } from "../context/BattleContext";
 import type { BattlePokemon } from "../types";
 import { getAllPokemons } from "../data";
 import type { ApiStat } from "../types";
-import { useAuth } from "../context/AuthContext"; 
+import { useAuth } from "../context/AuthContext";
 
 const Battle = () => {
   const { playerPokemon } = useBattle();
   const [computerPokemon, setComputerPokemon] = useState<BattlePokemon | null>(null);
   const [result, setResult] = useState<null | "win" | "lose">(null);
   const [xp, setXp] = useState(0);
-  const { user } = useAuth(); // current used token
+  const { token } = useAuth(); // current user with token
+  const resultRef = useRef<HTMLDivElement>(null); // <-- Ref für Scrollen
 
-  // load random enemy 
+  // Scroll zum Ergebnis, wenn es gesetzt wird
+  useEffect(() => {
+    if (result) {
+      resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [result]);
+
+  // Load a random enemy Pokemon
   const fetchRandomPokemon = async () => {
-    const data = await getAllPokemons(new AbortController(), 0, 100);
-    const randomIndex = Math.floor(Math.random() * data.results.length);
-    const poke = data.results[randomIndex];
+    try {
+      const data = await getAllPokemons(new AbortController(), 0, 100);
+      const randomIndex = Math.floor(Math.random() * data.results.length);
+      const poke = data.results[randomIndex];
 
-    const res = await fetch(poke.url);
-    const details = await res.json();
+      const res = await fetch(poke.url);
+      const details = await res.json();
 
-    const newPokemon: BattlePokemon = {
-      name: details.name,
-      image: details.sprites.front_default,
-      stats: (details.stats as ApiStat[]).map((stat) => ({
-        base_stat: stat.base_stat,
-        stat: { name: stat.stat.name },
-      })),
-    };
+      const newPokemon: BattlePokemon = {
+        name: details.name,
+        image: details.sprites.front_default,
+        stats: (details.stats as ApiStat[]).map((stat) => ({
+          base_stat: stat.base_stat,
+          stat: { name: stat.stat.name },
+        })),
+      };
 
-    setComputerPokemon(newPokemon);
+      setComputerPokemon(newPokemon);
+    } catch (err) {
+      console.error("Fehler beim Laden des Pokémon:", err);
+    }
   };
 
   useEffect(() => {
@@ -75,14 +87,14 @@ const Battle = () => {
 
     setResult(newResult);
 
-    // send xp to backend 
-    if (user?.token) {
+    // Send XP to backend
+    if (token) {
       try {
-        const res = await fetch("http://localhost:5000/api/users/xp", {
+        const res = await fetch("http://localhost:4001/users/xp", {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${user.token}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ amount }),
         });
@@ -90,12 +102,12 @@ const Battle = () => {
         if (!res.ok) throw new Error("Failed to update XP");
 
         const data = await res.json();
-        setXp(data.xp); // curren xp from backend 
+        setXp(data.xp); // Update XP from backend
       } catch (err) {
         console.error("Fehler beim Aktualisieren der XP:", err);
+        setXp((prev) => Math.max(prev + amount, 0));
       }
     } else {
-      // fallback: lokal actualisation
       setXp((prev) => Math.max(prev + amount, 0));
     }
 
@@ -105,10 +117,7 @@ const Battle = () => {
   return (
     <div className="flex flex-col items-center mt-12 text-white">
       <h1
-        className="
-          text-yellow-400 text-3xl uppercase font-bold tracking-wider
-          drop-shadow-2xl mt-6 mb-6 text-center
-        "
+        className="text-yellow-400 text-3xl uppercase font-bold tracking-wider drop-shadow-2xl text-center"
         style={{
           fontFamily: "'Luckiest Guy', cursive",
           WebkitTextStroke: "1px #000080",
@@ -127,7 +136,11 @@ const Battle = () => {
           <h2 className="text-xl font-bold mb-2">Your Pokemon</h2>
           <div className="card bg-base-100 w-80 shadow-md text-white">
             <figure className="bg-gray-100 p-4">
-              <img src={playerPokemon.image} alt={playerPokemon.name} className="w-48 h-48 object-contain" />
+              <img
+                src={playerPokemon.image}
+                alt={playerPokemon.name}
+                className="w-48 h-48 object-contain"
+              />
             </figure>
             <div className="card-body">
               <h2 className="card-title capitalize justify-center">{playerPokemon.name}</h2>
@@ -141,7 +154,11 @@ const Battle = () => {
           <h2 className="text-xl font-bold mb-2">Enemy</h2>
           <div className="card bg-base-100 w-80 shadow-md text-white">
             <figure className="bg-gray-100 p-4">
-              <img src={computerPokemon.image} alt={computerPokemon.name} className="w-48 h-48 object-contain" />
+              <img
+                src={computerPokemon.image}
+                alt={computerPokemon.name}
+                className="w-48 h-48 object-contain"
+              />
             </figure>
             <div className="card-body">
               <h2 className="card-title capitalize justify-center">{computerPokemon.name}</h2>
@@ -153,13 +170,13 @@ const Battle = () => {
 
       <button
         onClick={handleBattle}
-        className="bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-8 rounded transition-colors"
+        className="bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-8 rounded transition-colors mb-2"
       >
         Start Fight
       </button>
 
       {result && (
-        <div className="mt-6 text-3xl font-bold drop-shadow-lg">
+        <div ref={resultRef} className="mt-6 mb-3 text-3xl font-bold drop-shadow-lg">
           {result === "win" ? (
             <span className="text-green-400">
               Win! <span className="text-white text-2xl font-semibold">+100 XP</span>
