@@ -47,8 +47,8 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 text-black">
-      <div className="w-full max-w-md rounded-2xl shadow bg-white p-6 space-y-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-purple-900 via-blue-800 to-blue-600 px-4 text-black">
+      <div className="w-full max-w-md rounded-2xl shadow bg-gray-800 text-white p-6 space-y-4 bg">
         <h1 className="text-2xl font-semibold text-center">Sign In</h1>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
@@ -91,7 +91,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-xl py-2 font-medium bg-gray-900 text-white disabled:opacity-60"
+            className="w-full rounded-xl py-2 font-medium bg-gradient-to-r from-white via-orange-200 to-yellow-200 shadow-md text-black disabled:opacity-60"
           >
             {isSubmitting ? "Signing in..." : "Sign in"}
           </button>

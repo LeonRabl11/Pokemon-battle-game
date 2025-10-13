@@ -2,6 +2,8 @@ import express from "express";
 import { User } from "../models/user.model.ts";
 import { authGuard, type AuthedRequest }from "../middlewares/authGuard.ts";
 
+
+
 const router = express.Router();
 
 // update xp
@@ -23,7 +25,7 @@ router.patch("/xp", authGuard, async (req: AuthedRequest, res) => {
 });
 
 // Leaderboard
-router.get("/leaderboard", async (req, res) => {
+router.get("/leaderboard", authGuard, async (req, res) => {
   const users = await User.find().select("email xp -_id").sort({ xp: -1 });
   res.json(users);
 });
